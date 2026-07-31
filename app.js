@@ -159,7 +159,7 @@
 
   function startSyncPolling() {
     clearInterval(syncPollTimer);
-    const pollMs = window.SyncClient && window.SyncClient.mode === "gitee" ? 10000 : 4000;
+    const pollMs = window.SyncClient && window.SyncClient.mode === "cloud" ? 30000 : 4000;
     syncPollTimer = setInterval(syncFromServer, pollMs);
   }
 
@@ -1046,7 +1046,7 @@
     }
   }
 
-  function giteeSiteUrl() {
+  function cloudSiteUrl() {
     const cfg = window.SyncClient ? window.SyncClient.config : {};
     const configuredUrl = String(cfg.siteUrl || "").trim();
     if (configuredUrl) {
@@ -1056,8 +1056,8 @@
   }
 
   async function renderSyncModal() {
-    if (window.SyncClient && window.SyncClient.mode === "gitee") {
-      renderGiteeSyncModal();
+    if (window.SyncClient && window.SyncClient.mode === "cloud") {
+      renderCloudSyncModal();
       return;
     }
     els.syncModalBody.innerHTML = `
@@ -1117,28 +1117,32 @@
     renderIcons();
   }
 
-  function renderGiteeSyncModal() {
-    const token = window.SyncClient.getGiteeToken();
-    const siteUrl = giteeSiteUrl();
+  function renderCloudSyncModal() {
+    const token = window.SyncClient.getCloudToken();
+    const siteUrl = cloudSiteUrl();
+    const isGitHub = window.SyncClient.provider === "github";
+    const platformLabel = isGitHub ? "GitHub Pages" : "EdgeOne Pages";
+    const tokenLabel = isGitHub ? "GitHub 私人令牌" : "Gitee 私人令牌";
+    const tokenHint = isGitHub ? "需勾选 repo 权限；只保存在本机浏览器" : "需勾选 projects 权限；只保存在本机浏览器";
     els.syncModalBody.innerHTML = `
-      <h2 class="sync-modal-title">Gitee 云端同步</h2>
-      <p class="sync-modal-subtitle">网站已发布到 EdgeOne Pages，电脑关闭后手机仍可访问和同步。</p>
+      <h2 class="sync-modal-title">${platformLabel} 云端同步</h2>
+      <p class="sync-modal-subtitle">网站已发布到 ${platformLabel}，电脑关闭后手机仍可访问和同步。</p>
       <div class="sync-qr-wrap"><div id="syncQrBox"></div></div>
       ${token ? `<p class="sync-access-key">云端令牌：<code>已保存</code></p>` : `<div class="gitee-token-form">
-        <label for="giteeTokenInput">Gitee 私人令牌</label>
-        <input id="giteeTokenInput" type="password" autocomplete="off" placeholder="粘贴私人令牌" />
-        <button class="sync-copy" type="button" data-save-gitee-token><i data-lucide="save"></i><span>保存令牌</span></button>
+        <label for="cloudTokenInput">${tokenLabel}</label>
+        <input id="cloudTokenInput" type="password" autocomplete="off" placeholder="粘贴私人令牌" />
+        <button class="sync-copy" type="button" data-save-cloud-token><i data-lucide="save"></i><span>保存令牌</span></button>
       </div>`}
       <ul class="sync-url-list">
         <li class="sync-url-item public">
-          <span class="sync-url-label">EdgeOne 页面</span>
+          <span class="sync-url-label">${platformLabel} 页面</span>
           <code>${esc(siteUrl)}</code>
           <button class="sync-copy" type="button" data-copy-url="${esc(siteUrl)}">
             <i data-lucide="copy"></i><span>复制</span>
           </button>
         </li>
       </ul>
-      <p class="sync-status" id="giteeSyncStatus">${token ? "已保存令牌，正在等待云端同步。" : "保存令牌后，复习进度和学习时长会自动同步。"}</p>
+      <p class="sync-status" id="cloudSyncStatus">${token ? "已保存令牌，正在等待云端同步。" : "保存令牌后，复习进度和学习时长会自动同步。"}</p>
     `;
     const qrBox = els.syncModalBody.querySelector("#syncQrBox");
     if (window.QRCode && qrBox) {
@@ -1163,20 +1167,20 @@
         }
       });
     });
-    const saveButton = els.syncModalBody.querySelector("[data-save-gitee-token]");
+    const saveButton = els.syncModalBody.querySelector("[data-save-cloud-token]");
     if (saveButton) {
       saveButton.addEventListener("click", async () => {
-        const input = els.syncModalBody.querySelector("#giteeTokenInput");
+        const input = els.syncModalBody.querySelector("#cloudTokenInput");
         const nextToken = input.value.trim();
         if (!nextToken) {
           input.focus();
           return;
         }
-        const status = els.syncModalBody.querySelector("#giteeSyncStatus");
+        const status = els.syncModalBody.querySelector("#cloudSyncStatus");
         if (status) {
           status.textContent = "正在验证令牌并同步云端数据...";
         }
-        window.SyncClient.setGiteeToken(nextToken);
+        window.SyncClient.setCloudToken(nextToken);
         try {
           await syncFromServer();
           if (status) {
@@ -1187,14 +1191,13 @@
           }
         } catch (error) {
           if (status) {
-            status.textContent = "令牌校验失败，请检查 Gitee 私人令牌和 projects 权限。";
+            status.textContent = "令牌校验失败，请检查 " + (isGitHub ? "GitHub 私人令牌和 repo 权限。" : "Gitee 私人令牌和 projects 权限。");
           }
         }
       });
     }
     renderIcons();
   }
-
   function currentScopePoints() {
     if (selectedNode.type === "root") {
       return getAllPoints();

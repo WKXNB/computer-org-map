@@ -367,7 +367,7 @@
         renderStats();
       }
     }, 250);
-    const studyPollMs = window.SyncClient && window.SyncClient.mode === "gitee" ? 20000 : 10000;
+    const studyPollMs = window.SyncClient && window.SyncClient.mode === "cloud" ? 60000 : 10000;
     setInterval(loadStudy, studyPollMs);
   }
 

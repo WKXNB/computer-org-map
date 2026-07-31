@@ -2,14 +2,15 @@
   "use strict";
 
   const ACCESS_KEY = "computer-org-map-access-key";
-  const GITEE_TOKEN_KEY = "computer-org-map-gitee-token";
-  const GITEE_CONFIG = window.GITEE_CONFIG || {};
-  const giteeMode = Boolean(
-    GITEE_CONFIG.dataOwner &&
-    GITEE_CONFIG.dataRepo &&
-    GITEE_CONFIG.branch &&
-    GITEE_CONFIG.progressPath &&
-    GITEE_CONFIG.studyPath
+  const CLOUD_TOKEN_KEY = "computer-org-map-cloud-token";
+  const CONFIG = window.SYNC_CONFIG || window.GITEE_CONFIG || {};
+  const provider = String(CONFIG.provider || "gitee").toLowerCase();
+  const cloudMode = Boolean(
+    CONFIG.dataOwner &&
+    CONFIG.dataRepo &&
+    CONFIG.branch &&
+    CONFIG.progressPath &&
+    CONFIG.studyPath
   );
 
   function readKeyFromUrl() {
@@ -60,26 +61,38 @@
     return clean;
   }
 
-  function getGiteeToken() {
+  function getCloudToken() {
     try {
-      return localStorage.getItem(GITEE_TOKEN_KEY) || "";
+      return localStorage.getItem(CLOUD_TOKEN_KEY) || "";
     } catch (error) {
       return "";
     }
   }
 
-  function setGiteeToken(token) {
+  function setCloudToken(token) {
     const clean = String(token || "").trim();
     try {
       if (clean) {
-        localStorage.setItem(GITEE_TOKEN_KEY, clean);
+        localStorage.setItem(CLOUD_TOKEN_KEY, clean);
       } else {
-        localStorage.removeItem(GITEE_TOKEN_KEY);
+        localStorage.removeItem(CLOUD_TOKEN_KEY);
       }
     } catch (error) {
       // Ignore storage failures.
     }
     return clean;
+  }
+
+  function getGiteeToken() {
+    return getCloudToken();
+  }
+
+  function setGiteeToken(token) {
+    return setCloudToken(token);
+  }
+
+  function providerLabel() {
+    return provider === "github" ? "GitHub" : "Gitee";
   }
 
   function isPrivateHost(hostname) {
@@ -113,19 +126,49 @@
       .join("/");
   }
 
-  function giteeContentsUrl(path) {
-    const cfg = GITEE_CONFIG;
+  function cloudContentsUrl(path) {
+    const owner = encodeURIComponent(CONFIG.dataOwner);
+    const repo = encodeURIComponent(CONFIG.dataRepo);
+    const encodedPath = encodePath(path);
+    const ref = encodeURIComponent(CONFIG.branch);
+    if (provider === "github") {
+      return (
+        "https://api.github.com/repos/" +
+        owner +
+        "/" +
+        repo +
+        "/contents/" +
+        encodedPath +
+        "?ref=" +
+        ref
+      );
+    }
     return (
       "https://gitee.com/api/v5/repos/" +
-      encodeURIComponent(cfg.dataOwner) +
+      owner +
       "/" +
-      encodeURIComponent(cfg.dataRepo) +
+      repo +
       "/contents/" +
-      encodePath(path) +
+      encodedPath +
       "?access_token=" +
-      encodeURIComponent(getGiteeToken()) +
+      encodeURIComponent(getCloudToken()) +
       "&ref=" +
-      encodeURIComponent(cfg.branch)
+      ref
+    );
+  }
+
+  function cloudHeaders(extra = {}) {
+    if (provider !== "github") {
+      return Object.assign({}, extra || {});
+    }
+    return Object.assign(
+      {},
+      {
+        Authorization: "Bearer " + getCloudToken(),
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      extra || {}
     );
   }
 
@@ -145,46 +188,87 @@
     return btoa(binary);
   }
 
-  async function giteeGet(path) {
-    const token = getGiteeToken();
-    if (!giteeMode || !token) {
-      throw new Error("Gitee sync is not configured");
+  function entryData(entry) {
+    const raw = entry && entry.content;
+    const encoded = typeof raw === "string" ? raw : raw && raw.content;
+    if (!encoded) {
+      return null;
     }
-    const response = await fetch(giteeContentsUrl(path), { cache: "no-store" });
+    return JSON.parse(base64ToUtf8(encoded));
+  }
+
+  async function cloudGet(path) {
+    const token = getCloudToken();
+    if (!cloudMode || !token) {
+      throw new Error(providerLabel() + " sync is not configured");
+    }
+    const response = await fetch(cloudContentsUrl(path), {
+      cache: "no-store",
+      headers: cloudHeaders(),
+    });
     if (response.status === 404) {
       return null;
     }
     if (!response.ok) {
-      throw new Error("Gitee read failed: " + response.status);
+      throw new Error(providerLabel() + " read failed: " + response.status);
     }
     const entry = await response.json();
     return {
-      data: JSON.parse(base64ToUtf8(entry.content)),
-      sha: entry.sha || "",
+      data: entryData(entry),
+      sha: entry.sha || (entry.content && entry.content.sha) || "",
     };
   }
 
-  async function giteeWrite(path, payload, sha) {
-    const token = getGiteeToken();
-    if (!giteeMode || !token) {
-      throw new Error("Gitee sync is not configured");
+  async function cloudWrite(path, payload, sha) {
+    const token = getCloudToken();
+    if (!cloudMode || !token) {
+      throw new Error(providerLabel() + " sync is not configured");
     }
+    const content = utf8ToBase64(JSON.stringify(payload));
+    const message = "sync " + new Date().toISOString();
+    const branch = CONFIG.branch;
+    const owner = encodeURIComponent(CONFIG.dataOwner);
+    const repo = encodeURIComponent(CONFIG.dataRepo);
+    const encodedPath = encodePath(path);
+
+    if (provider === "github") {
+      const body = { message, content, branch };
+      if (sha) {
+        body.sha = sha;
+      }
+      const response = await fetch(
+        "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + encodedPath,
+        {
+          method: "PUT",
+          headers: cloudHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify(body),
+        }
+      );
+      if (!response.ok) {
+        const detail = await response.text().catch(() => "");
+        throw new Error("GitHub write failed: " + response.status + " " + detail.slice(0, 160));
+      }
+      const entry = await response.json();
+      const next = entryData(entry);
+      return next || payload;
+    }
+
     const body = {
       access_token: token,
-      content: utf8ToBase64(JSON.stringify(payload)),
-      message: "sync " + new Date().toISOString(),
-      branch: GITEE_CONFIG.branch,
+      content,
+      message,
+      branch,
     };
     if (sha) {
       body.sha = sha;
     }
     const url =
       "https://gitee.com/api/v5/repos/" +
-      encodeURIComponent(GITEE_CONFIG.dataOwner) +
+      owner +
       "/" +
-      encodeURIComponent(GITEE_CONFIG.dataRepo) +
+      repo +
       "/contents/" +
-      encodePath(path);
+      encodedPath;
     const response = await fetch(url, {
       method: sha ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -195,15 +279,13 @@
       throw new Error("Gitee write failed: " + response.status + " " + detail.slice(0, 160));
     }
     const entry = await response.json();
-    if (entry && entry.content) {
-      return JSON.parse(base64ToUtf8(entry.content));
-    }
-    return payload;
+    const next = entryData(entry);
+    return next || payload;
   }
 
   async function getProgress() {
-    if (giteeMode) {
-      const entry = await giteeGet(GITEE_CONFIG.progressPath);
+    if (cloudMode) {
+      const entry = await cloudGet(CONFIG.progressPath);
       return entry ? entry.data : { version: 0, map: {} };
     }
     const response = await fetch("/api/progress", {
@@ -216,9 +298,16 @@
     return response.json();
   }
 
-  function isStaleGiteeError(error) {
-    const message = String((error && error.message) || "");
-    return message.indexOf("sha is missing") >= 0 || message.indexOf("sha is empty") >= 0 || message.indexOf("sha is invalid") >= 0;
+  function isStaleCloudError(error) {
+    const message = String((error && error.message) || "").toLowerCase();
+    return (
+      message.indexOf("sha is missing") >= 0 ||
+      message.indexOf("sha is empty") >= 0 ||
+      message.indexOf("sha is invalid") >= 0 ||
+      message.indexOf("does not match") >= 0 ||
+      message.indexOf("conflict") >= 0 ||
+      message.indexOf("409") >= 0
+    );
   }
 
   function delay(ms) {
@@ -226,10 +315,10 @@
   }
 
   async function saveProgress(map) {
-    if (giteeMode) {
-      const path = GITEE_CONFIG.progressPath;
+    if (cloudMode) {
+      const path = CONFIG.progressPath;
       for (let attempt = 0; attempt < 4; attempt += 1) {
-        const entry = await giteeGet(path);
+        const entry = await cloudGet(path);
         const currentMap = entry && entry.data && entry.data.map ? entry.data.map : {};
         const mergedMap = Object.assign({}, currentMap, map || {});
         const data = {
@@ -238,9 +327,9 @@
           updatedAt: Date.now() / 1000,
         };
         try {
-          return await giteeWrite(path, data, entry && entry.sha ? entry.sha : "");
+          return await cloudWrite(path, data, entry && entry.sha ? entry.sha : "");
         } catch (error) {
-          if (attempt < 3 && isStaleGiteeError(error)) {
+          if (attempt < 3 && isStaleCloudError(error)) {
             await delay(300 * (attempt + 1));
             continue;
           }
@@ -260,7 +349,7 @@
   }
 
   async function resetProgress() {
-    if (giteeMode) {
+    if (cloudMode) {
       return saveProgress({});
     }
     const response = await fetch("/api/progress/reset", {
@@ -274,8 +363,8 @@
   }
 
   async function getStudy() {
-    if (giteeMode) {
-      const entry = await giteeGet(GITEE_CONFIG.studyPath);
+    if (cloudMode) {
+      const entry = await cloudGet(CONFIG.studyPath);
       return entry ? entry.data : { version: 0, sessions: [] };
     }
     const response = await fetch("/api/study", {
@@ -289,10 +378,10 @@
   }
 
   async function addStudySession(session) {
-    if (giteeMode) {
-      const path = GITEE_CONFIG.studyPath;
+    if (cloudMode) {
+      const path = CONFIG.studyPath;
       for (let attempt = 0; attempt < 4; attempt += 1) {
-        const entry = await giteeGet(path);
+        const entry = await cloudGet(path);
         const data = entry && entry.data ? entry.data : { version: 0, sessions: [] };
         if (!Array.isArray(data.sessions)) {
           data.sessions = [];
@@ -301,9 +390,9 @@
         data.version = (Number(data.version) || 0) + 1;
         data.updatedAt = Date.now() / 1000;
         try {
-          return await giteeWrite(path, data, entry && entry.sha ? entry.sha : "");
+          return await cloudWrite(path, data, entry && entry.sha ? entry.sha : "");
         } catch (error) {
-          if (attempt < 3 && isStaleGiteeError(error)) {
+          if (attempt < 3 && isStaleCloudError(error)) {
             await delay(300 * (attempt + 1));
             continue;
           }
@@ -323,12 +412,15 @@
   }
 
   window.SyncClient = {
-    mode: giteeMode ? "gitee" : "local",
-    config: GITEE_CONFIG,
+    mode: cloudMode ? "cloud" : "local",
+    provider,
+    config: CONFIG,
     getKey,
     setKey,
     headers,
     isPublicPage,
+    getCloudToken,
+    setCloudToken,
     getGiteeToken,
     setGiteeToken,
     getProgress,

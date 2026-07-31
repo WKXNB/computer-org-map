@@ -1,6 +1,6 @@
 window.SERVER_CONFIG = {
   urls: [window.location.origin + window.location.pathname],
   tunnelUrl: "",
-  hostname: "edgeone-pages",
+  hostname: "github-pages",
   accessRequired: false,
 };
