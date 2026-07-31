@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2f7cf6" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'"
+    />
+    <title>学习计时 · 2027 计算机组成原理</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cpath d='M9 11h14M9 16h14M9 21h9' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./study.css" />
+  </head>
+  <body>
+    <header class="study-topbar">
+      <a class="back-link" href="./">
+        <i data-lucide="arrow-left"></i>
+        <span>知识图谱</span>
+      </a>
+      <div class="study-title">
+        <i data-lucide="timer"></i>
+        <span>学习计时</span>
+      </div>
+      <div class="sync-state" id="syncState">
+        <i data-lucide="cloud"></i>
+        <span>已连接</span>
+      </div>
+    </header>
+
+    <main class="study-main">
+      <section class="clock-stage" id="fullscreenStage">
+        <div class="clock-status" id="clockStatus">准备学习</div>
+        <div class="flip-clock" id="flipClock" aria-live="polite" aria-label="学习计时器">
+          <div class="flip-unit" data-key="h1"><div class="flip-number">0</div></div>
+          <div class="flip-unit" data-key="h0"><div class="flip-number">0</div></div>
+          <div class="flip-colon">:</div>
+          <div class="flip-unit" data-key="m1"><div class="flip-number">0</div></div>
+          <div class="flip-unit" data-key="m0"><div class="flip-number">0</div></div>
+          <div class="flip-colon">:</div>
+          <div class="flip-unit" data-key="s1"><div class="flip-number">0</div></div>
+          <div class="flip-unit" data-key="s0"><div class="flip-number">0</div></div>
+        </div>
+        <div class="clock-controls">
+          <button class="clock-button primary" id="startButton" type="button">
+            <i data-lucide="play"></i>
+            <span>开始学习</span>
+          </button>
+          <button class="clock-button" id="pauseButton" type="button" hidden>
+            <i data-lucide="pause"></i>
+            <span>暂停</span>
+          </button>
+          <button class="clock-button danger" id="endButton" type="button" hidden>
+            <i data-lucide="square"></i>
+            <span>结束学习</span>
+          </button>
+          <button class="clock-button" id="fullscreenButton" type="button">
+            <i data-lucide="maximize"></i>
+            <span>全屏</span>
+          </button>
+        </div>
+      </section>
+
+      <aside class="study-side">
+        <div class="study-cards">
+          <div class="study-card">
+            <span>今日</span>
+            <strong id="todayTotal">0 分钟</strong>
+          </div>
+          <div class="study-card">
+            <span>近 7 天</span>
+            <strong id="weekTotal">0 分钟</strong>
+          </div>
+          <div class="study-card">
+            <span>累计</span>
+            <strong id="allTotal">0 分钟</strong>
+          </div>
+        </div>
+        <div class="session-panel">
+          <div class="session-heading">
+            <span>最近记录</span>
+            <button class="refresh-button" id="refreshButton" type="button" aria-label="刷新记录" title="刷新记录">
+              <i data-lucide="refresh-cw"></i>
+            </button>
+          </div>
+          <ul class="session-list" id="sessionList"></ul>
+        </div>
+      </aside>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./gitee-config.js"></script>
+    <script src="./sync.js"></script>
+    <script src="./assets/lucide.min.js"></script>
+    <script src="./study.js"></script>
+  </body>
+</html>
