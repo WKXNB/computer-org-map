@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2f7cf6" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://gitee.com https://*.gitee.com https://api.github.com https://github.com; font-src 'self' data:; object-src 'none'; base-uri 'self'"
+    />
+    <title>2027 计算机网络知识图谱</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cpath d='M9 11h14M9 16h14M9 21h9' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <i data-lucide="network"></i>
+        </div>
+        <div>
+          <h1>2027 计算机网络</h1>
+          <p>知识图谱 · 按教材顺序复习</p>
+        </div>
+      </div>
+      <div class="overall-progress">
+        <div class="progress-copy">
+          <strong id="progressPercent">0%</strong>
+          <span id="progressCount">0 / 0</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <a class="text-button" href="./study.html" title="学习计时" aria-label="学习计时">
+          <i data-lucide="timer"></i>
+          <span>学习计时</span>
+        </a>
+        <button class="text-button" id="syncButton" type="button" title="手机同步" aria-label="手机同步">
+          <i data-lucide="smartphone"></i>
+          <span>手机同步</span>
+        </button>
+        <button class="icon-button" id="resetButton" type="button" title="清空复习标记" aria-label="清空复习标记">
+          <i data-lucide="rotate-ccw"></i>
+        </button>
+      </div>
+    </header>
+    <nav class="course-nav" aria-label="科目切换">
+      <a class="course-nav-link" href="./index.html">组成原理</a>
+      <a class="course-nav-link" href="./os.html">操作系统</a>
+      <a class="course-nav-link" href="./data-structure.html">数据结构</a>
+      <a class="course-nav-link active" href="./network.html">计算机网络</a>
+    </nav>
+
+
+    <div class="mobile-strip" id="mobileStrip" aria-label="章节"></div>
+
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <div class="panel-heading">
+            <span>章节</span>
+            <span id="chapterCount"></span>
+          </div>
+          <div id="chapterList"></div>
+        </div>
+        <div class="sidebar-section">
+          <div class="panel-heading">
+            <span>筛选</span>
+          </div>
+          <label class="search-box">
+            <i data-lucide="search"></i>
+            <input id="searchInput" type="search" placeholder="搜索知识点" autocomplete="off" />
+          </label>
+          <div class="segmented" id="statusFilter" role="group" aria-label="复习状态筛选">
+            <button class="segment active" data-status="all" type="button">全部</button>
+            <button class="segment" data-status="todo" type="button">未复习</button>
+            <button class="segment" data-status="doing" type="button">进行中</button>
+            <button class="segment" data-status="done" type="button">已复习</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="graph-pane" aria-label="知识图谱">
+        <div class="graph-toolbar">
+          <span class="graph-hint" id="graphHint">全部知识图谱</span>
+          <div class="graph-actions">
+            <button class="icon-button small" id="zoomOut" type="button" aria-label="缩小">
+              <i data-lucide="zoom-out"></i>
+            </button>
+            <button class="icon-button small" id="zoomIn" type="button" aria-label="放大">
+              <i data-lucide="zoom-in"></i>
+            </button>
+            <button class="icon-button small" id="fitGraph" type="button" aria-label="适应窗口">
+              <i data-lucide="scan"></i>
+            </button>
+          </div>
+        </div>
+        <div class="graph-scroll" id="graphScroll">
+          <div class="graph-canvas" id="graphCanvas">
+            <svg class="edge-layer" id="edgeLayer"></svg>
+            <div class="node-layer" id="nodeLayer"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="detail-panel" id="detailPanel">
+        <div class="detail-empty" id="detailEmpty">
+          <i data-lucide="mouse-pointer-click"></i>
+          <span>选择图谱节点查看知识点</span>
+        </div>
+        <div class="detail-content" id="detailContent" hidden></div>
+      </aside>
+    </main>
+
+    <div class="point-modal" id="pointModal" hidden>
+      <div class="modal-backdrop" data-close-point-modal></div>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-label="知识点详情">
+        <button class="modal-close" type="button" data-close-point-modal aria-label="关闭">
+          <i data-lucide="x"></i>
+        </button>
+        <div id="pointModalBody"></div>
+      </section>
+    </div>
+
+    <div class="point-modal" id="syncModal" hidden>
+      <div class="modal-backdrop" data-close-sync-modal></div>
+      <section class="modal-card sync-card" role="dialog" aria-modal="true" aria-label="手机同步">
+        <button class="modal-close" type="button" data-close-sync-modal aria-label="关闭">
+          <i data-lucide="x"></i>
+        </button>
+        <div id="syncModalBody"></div>
+      </section>
+    </div>
+
+    <script src="./config.js"></script>
+    <script src="./sync-config.js"></script>
+    <script src="./sync.js"></script>
+    <script src="./data-net.js"></script>
+    <script src="./assets/lucide.min.js"></script>
+    <script src="./assets/qrcode.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

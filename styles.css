@@ -1427,3 +1427,49 @@ a.action-button {
 .gitee-token-form .sync-copy {
   justify-self: start;
 }
+
+.course-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 20px;
+  overflow-x: auto;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+}
+
+.course-nav-link {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 7px;
+}
+
+.course-nav-link:hover {
+  color: var(--text);
+  background: var(--panel-soft);
+}
+
+.course-nav-link.active {
+  color: #ffffff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+@media (max-width: 720px) {
+  .course-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 8px 12px;
+  }
+
+  .course-nav-link {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}

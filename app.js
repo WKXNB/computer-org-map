@@ -163,23 +163,46 @@
     syncPollTimer = setInterval(syncFromServer, pollMs);
   }
 
+  function currentPointIds() {
+    const ids = new Set();
+    graph.chapters.forEach((chapter) => {
+      chapter.sections.forEach((section) => {
+        section.topics.forEach((topic) => {
+          topic.points.forEach((text, index) => ids.add(pointId(topic, index)));
+        });
+      });
+    });
+    return ids;
+  }
+
   async function resetServerProgress() {
+    const ids = currentPointIds();
+    const nextMap = {};
+    Object.keys(reviewMap || {}).forEach((key) => {
+      if (!ids.has(key)) {
+        nextMap[key] = reviewMap[key];
+      }
+    });
+    reviewMap = nextMap;
+    const json = JSON.stringify(reviewMap);
+    lastSavedJson = json;
+    localStorage.setItem(STORAGE_KEY, json);
+    refreshProgressUI();
+    renderDetail();
     try {
-      const data = await window.SyncClient.resetProgress();
+      const data = await window.SyncClient.saveProgress(nextMap);
       serverAvailable = true;
       serverVersion = data.version || 0;
-      reviewMap = {};
-      lastSavedJson = "{}";
-      localStorage.setItem(STORAGE_KEY, "{}");
-      refreshProgressUI();
-      renderDetail();
+      lastSavedJson = JSON.stringify(reviewMap);
     } catch (error) {
       serverAvailable = false;
+      lastSavedJson = "";
     }
   }
 
   function pointId(topic, index) {
-    return `${topic.id}-${index}`;
+    const prefix = graph && graph.courseKey ? graph.courseKey + "-" : "";
+    return `${prefix}${topic.id}-${index}`;
   }
 
   function getPoints(section) {
@@ -232,19 +255,7 @@
     return Math.round((stats.done / stats.total) * 100);
   }
 
-  const PDF_PARTS = [
-    { file: "ch1.pdf", start: 13, end: 31 },
-    { file: "ch2a.pdf", start: 32, end: 60 },
-    { file: "ch2b.pdf", start: 61, end: 88 },
-    { file: "ch3a.pdf", start: 89, end: 118 },
-    { file: "ch3b.pdf", start: 119, end: 147 },
-    { file: "ch4a.pdf", start: 148, end: 177 },
-    { file: "ch4b.pdf", start: 178, end: 206 },
-    { file: "ch5a.pdf", start: 207, end: 246 },
-    { file: "ch5b.pdf", start: 247, end: 285 },
-    { file: "ch6.pdf", start: 286, end: 302 },
-    { file: "ch7.pdf", start: 303, end: 340 },
-  ];
+  const PDF_PARTS = (graph && graph.pdfParts) || [];
 
   function pdfUrl(page) {
     if (!page) {
@@ -590,7 +601,7 @@
 
   function updateGraphHint() {
     if (selectedNode.type === "root") {
-      els.graphHint.textContent = "全部知识图谱";
+      els.graphHint.textContent = graph.meta.title;
     } else if (selectedNode.type === "chapter") {
       const chapter = graph.chapters.find((item) => item.id === selectedNode.id);
       els.graphHint.textContent = chapter ? `第 ${graph.chapters.indexOf(chapter) + 1} 章 · ${chapter.title}` : "知识图谱";
@@ -665,7 +676,7 @@
       const stats = statsFor(getAllPoints());
       return {
         badge: "408",
-        title: "全部知识图谱",
+        title: graph.meta.title,
         page: "",
         pageNumber: null,
         summary: graph.meta.source,
@@ -1268,13 +1279,9 @@
     });
 
     els.resetButton.addEventListener("click", () => {
-      if (window.confirm("确定清空所有复习标记吗？")) {
-        reviewMap = {};
-        saveReviewMap();
-        refreshProgressUI();
-        renderDetail();
-        resetServerProgress();
-      }
+      if (window.confirm("确定清空当前科目的复习标记吗？")) {
+          resetServerProgress();
+        }
     });
 
     els.syncButton.addEventListener("click", openSyncModal);

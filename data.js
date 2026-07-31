@@ -4,7 +4,19 @@ window.KNOWLEDGE_GRAPH = {
     source: "2027计算机组成原理_高清带书签版.pdf",
     chapters: 7,
   },
-  chapters: [
+  pdfParts: [
+    { file: "ch1.pdf", start: 13, end: 31 },
+    { file: "ch2a.pdf", start: 32, end: 60 },
+    { file: "ch2b.pdf", start: 61, end: 88 },
+    { file: "ch3a.pdf", start: 89, end: 118 },
+    { file: "ch3b.pdf", start: 119, end: 147 },
+    { file: "ch4a.pdf", start: 148, end: 177 },
+    { file: "ch4b.pdf", start: 178, end: 206 },
+    { file: "ch5a.pdf", start: 207, end: 246 },
+    { file: "ch5b.pdf", start: 247, end: 285 },
+    { file: "ch6.pdf", start: 286, end: 302 },
+    { file: "ch7.pdf", start: 303, end: 340 },
+  ],  chapters: [
     {
       id: "ch1",
       title: "计算机系统概述",
