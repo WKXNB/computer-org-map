@@ -57,16 +57,35 @@
     }
   }
 
+  function mergeProgressMaps(localMap, remoteMap, remoteVersion) {
+    const merged = { ...(localMap || {}) };
+    const remote = remoteMap && typeof remoteMap === "object" ? remoteMap : {};
+    for (const key of Object.keys(remote)) {
+      if (remote[key]) {
+        merged[key] = true;
+      }
+    }
+    return {
+      map: merged,
+      version: Math.max(Number(remoteVersion) || 0, serverVersion || 0),
+      changed: JSON.stringify(merged) !== JSON.stringify(localMap || {}),
+    };
+  }
+
   async function loadInitialProgress() {
     reviewMap = loadLocalReviewMap();
     try {
       const data = await window.SyncClient.getProgress();
-      if (data && data.map && typeof data.map === "object") {
-        reviewMap = data.map;
+      if (data) {
+        const merged = mergeProgressMaps(reviewMap, data.map, data.version);
+        reviewMap = merged.map;
         serverAvailable = true;
-        serverVersion = data.version || 0;
+        serverVersion = merged.version;
         lastSavedJson = JSON.stringify(reviewMap);
         localStorage.setItem(STORAGE_KEY, lastSavedJson);
+        if (merged.changed) {
+          scheduleServerSave();
+        }
       }
     } catch (error) {
       serverAvailable = false;
@@ -118,16 +137,20 @@
   async function syncFromServer() {
     try {
       const data = await window.SyncClient.getProgress();
-      const remoteMap = data && data.map ? data.map : {};
+      const merged = mergeProgressMaps(reviewMap, data && data.map, data && data.version);
+      const remoteJson = JSON.stringify(data && data.map ? data.map : {});
       serverAvailable = true;
-      serverVersion = data.version || 0;
-      const remoteJson = JSON.stringify(remoteMap);
-      if (remoteJson !== JSON.stringify(reviewMap)) {
-        reviewMap = remoteMap;
-        lastSavedJson = remoteJson;
-        localStorage.setItem(STORAGE_KEY, remoteJson);
+      serverVersion = merged.version;
+      const nextJson = JSON.stringify(merged.map);
+      const localJson = JSON.stringify(reviewMap);
+      const changed = merged.changed || nextJson !== remoteJson;
+      if (changed) {
+        reviewMap = merged.map;
+        localStorage.setItem(STORAGE_KEY, nextJson);
+        lastSavedJson = nextJson === localJson && nextJson !== remoteJson ? "" : nextJson;
         refreshProgressUI();
         renderDetail();
+        scheduleServerSave();
       }
     } catch (error) {
       serverAvailable = false;
@@ -1111,6 +1134,7 @@
           </button>
         </li>
       </ul>
+      <p class="sync-status" id="giteeSyncStatus">${token ? "已保存令牌，正在等待云端同步。" : "保存令牌后，复习进度和学习时长会自动同步。"}</p>
     `;
     const qrBox = els.syncModalBody.querySelector("#syncQrBox");
     if (window.QRCode && qrBox) {
@@ -1137,20 +1161,31 @@
     });
     const saveButton = els.syncModalBody.querySelector("[data-save-gitee-token]");
     if (saveButton) {
-      saveButton.addEventListener("click", () => {
+      saveButton.addEventListener("click", async () => {
         const input = els.syncModalBody.querySelector("#giteeTokenInput");
         const nextToken = input.value.trim();
         if (!nextToken) {
           input.focus();
           return;
         }
+        const status = els.syncModalBody.querySelector("#giteeSyncStatus");
+        if (status) {
+          status.textContent = "正在验证令牌并同步云端数据...";
+        }
         window.SyncClient.setGiteeToken(nextToken);
-        renderGiteeSyncModal();
-        syncFromServer().then(() => {
+        try {
+          await syncFromServer();
+          if (status) {
+            status.textContent = serverAvailable ? "令牌有效，云端同步已连接。" : "令牌已保存，云端暂未连接，稍后会自动重试。";
+          }
           if (serverAvailable) {
             scheduleServerSave();
           }
-        });
+        } catch (error) {
+          if (status) {
+            status.textContent = "令牌校验失败，请检查 Gitee 私人令牌和 projects 权限。";
+          }
+        }
       });
     }
     renderIcons();

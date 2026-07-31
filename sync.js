@@ -216,16 +216,37 @@
     return response.json();
   }
 
+  function isStaleGiteeError(error) {
+    const message = String((error && error.message) || "");
+    return message.indexOf("sha is missing") >= 0 || message.indexOf("sha is empty") >= 0 || message.indexOf("sha is invalid") >= 0;
+  }
+
+  function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async function saveProgress(map) {
     if (giteeMode) {
       const path = GITEE_CONFIG.progressPath;
-      const entry = await giteeGet(path);
-      const data = {
-        version: (Number(entry && entry.data && entry.data.version) || 0) + 1,
-        map: map || {},
-        updatedAt: Date.now() / 1000,
-      };
-      return giteeWrite(path, data, entry && entry.sha ? entry.sha : "");
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const entry = await giteeGet(path);
+        const currentMap = entry && entry.data && entry.data.map ? entry.data.map : {};
+        const mergedMap = Object.assign({}, currentMap, map || {});
+        const data = {
+          version: (Number(entry && entry.data && entry.data.version) || 0) + 1,
+          map: mergedMap,
+          updatedAt: Date.now() / 1000,
+        };
+        try {
+          return await giteeWrite(path, data, entry && entry.sha ? entry.sha : "");
+        } catch (error) {
+          if (attempt < 3 && isStaleGiteeError(error)) {
+            await delay(300 * (attempt + 1));
+            continue;
+          }
+          throw error;
+        }
+      }
     }
     const response = await fetch("/api/progress", {
       method: "PUT",
@@ -270,15 +291,25 @@
   async function addStudySession(session) {
     if (giteeMode) {
       const path = GITEE_CONFIG.studyPath;
-      const entry = await giteeGet(path);
-      const data = entry && entry.data ? entry.data : { version: 0, sessions: [] };
-      if (!Array.isArray(data.sessions)) {
-        data.sessions = [];
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const entry = await giteeGet(path);
+        const data = entry && entry.data ? entry.data : { version: 0, sessions: [] };
+        if (!Array.isArray(data.sessions)) {
+          data.sessions = [];
+        }
+        data.sessions.push(session);
+        data.version = (Number(data.version) || 0) + 1;
+        data.updatedAt = Date.now() / 1000;
+        try {
+          return await giteeWrite(path, data, entry && entry.sha ? entry.sha : "");
+        } catch (error) {
+          if (attempt < 3 && isStaleGiteeError(error)) {
+            await delay(300 * (attempt + 1));
+            continue;
+          }
+          throw error;
+        }
       }
-      data.sessions.push(session);
-      data.version = (Number(data.version) || 0) + 1;
-      data.updatedAt = Date.now() / 1000;
-      return giteeWrite(path, data, entry && entry.sha ? entry.sha : "");
     }
     const response = await fetch("/api/study/session", {
       method: "POST",

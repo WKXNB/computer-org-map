@@ -1153,6 +1153,12 @@ a.action-button {
   font-weight: 800;
   letter-spacing: 2px;
 }
+.sync-status {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
 
 @keyframes spin {
   to {
