@@ -1122,7 +1122,7 @@
     const siteUrl = giteeSiteUrl();
     els.syncModalBody.innerHTML = `
       <h2 class="sync-modal-title">Gitee 云端同步</h2>
-      <p class="sync-modal-subtitle">网站已发布到 Gitee Pages，电脑关闭后手机仍可访问和同步。</p>
+      <p class="sync-modal-subtitle">网站已发布到 EdgeOne Pages，电脑关闭后手机仍可访问和同步。</p>
       <div class="sync-qr-wrap"><div id="syncQrBox"></div></div>
       ${token ? `<p class="sync-access-key">云端令牌：<code>已保存</code></p>` : `<div class="gitee-token-form">
         <label for="giteeTokenInput">Gitee 私人令牌</label>
@@ -1131,7 +1131,7 @@
       </div>`}
       <ul class="sync-url-list">
         <li class="sync-url-item public">
-          <span class="sync-url-label">Gitee 页面</span>
+          <span class="sync-url-label">EdgeOne 页面</span>
           <code>${esc(siteUrl)}</code>
           <button class="sync-copy" type="button" data-copy-url="${esc(siteUrl)}">
             <i data-lucide="copy"></i><span>复制</span>
