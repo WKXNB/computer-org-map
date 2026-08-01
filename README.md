@@ -4,7 +4,8 @@
 
 ## 科目入口
 
-- 计算机组成原理：`./index.html`
+- 首页：`./index.html`
+- 计算机组成原理：`./computer.html`
 - 操作系统：`./os.html`
 - 数据结构：`./data-structure.html`
 - 计算机网络：`./network.html`

@@ -310,7 +310,7 @@
   }
 
   const PDF_PARTS = (graph && graph.pdfParts) || [];
-  const PDF_CACHE_VERSION = "20260801-11";
+  const PDF_CACHE_VERSION = "20260801-12";
 
   function pdfUrl(page) {
     if (!page) {
