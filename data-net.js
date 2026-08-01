@@ -17,18 +17,38 @@ window.KNOWLEDGE_GRAPH = {
       "end": 61
     },
     {
-      "file": "net3.pdf",
+      "file": "net3a.pdf",
       "start": 62,
+      "end": 100
+    },
+    {
+      "file": "net3b.pdf",
+      "start": 101,
       "end": 138
     },
     {
-      "file": "net4.pdf",
+      "file": "net4a.pdf",
       "start": 139,
+      "end": 171
+    },
+    {
+      "file": "net4b.pdf",
+      "start": 172,
+      "end": 204
+    },
+    {
+      "file": "net4c.pdf",
+      "start": 205,
       "end": 235
     },
     {
-      "file": "net5.pdf",
+      "file": "net5a.pdf",
       "start": 236,
+      "end": 257
+    },
+    {
+      "file": "net5b.pdf",
+      "start": 258,
       "end": 278
     },
     {

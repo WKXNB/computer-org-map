@@ -12,8 +12,13 @@ window.KNOWLEDGE_GRAPH = {
       "end": 24
     },
     {
-      "file": "ds2.pdf",
+      "file": "ds2a.pdf",
       "start": 25,
+      "end": 49
+    },
+    {
+      "file": "ds2b.pdf",
+      "start": 50,
       "end": 74
     },
     {
@@ -27,23 +32,43 @@ window.KNOWLEDGE_GRAPH = {
       "end": 135
     },
     {
-      "file": "ds5.pdf",
+      "file": "ds5a.pdf",
       "start": 136,
+      "end": 170
+    },
+    {
+      "file": "ds5b.pdf",
+      "start": 171,
       "end": 206
     },
     {
-      "file": "ds6.pdf",
+      "file": "ds6a.pdf",
       "start": 207,
+      "end": 241
+    },
+    {
+      "file": "ds6b.pdf",
+      "start": 242,
       "end": 276
     },
     {
-      "file": "ds7.pdf",
+      "file": "ds7a.pdf",
       "start": 277,
+      "end": 311
+    },
+    {
+      "file": "ds7b.pdf",
+      "start": 312,
       "end": 345
     },
     {
-      "file": "ds8.pdf",
+      "file": "ds8a.pdf",
       "start": 346,
+      "end": 374
+    },
+    {
+      "file": "ds8b.pdf",
+      "start": 375,
       "end": 404
     }
   ],

@@ -12,23 +12,53 @@ window.KNOWLEDGE_GRAPH = {
       "end": 48
     },
     {
-      "file": "os2.pdf",
+      "file": "os2a.pdf",
       "start": 49,
+      "end": 83
+    },
+    {
+      "file": "os2b.pdf",
+      "start": 84,
+      "end": 118
+    },
+    {
+      "file": "os2c.pdf",
+      "start": 119,
+      "end": 152
+    },
+    {
+      "file": "os2d.pdf",
+      "start": 153,
       "end": 187
     },
     {
-      "file": "os3.pdf",
+      "file": "os3a.pdf",
       "start": 188,
+      "end": 222
+    },
+    {
+      "file": "os3b.pdf",
+      "start": 223,
       "end": 262
     },
     {
-      "file": "os4.pdf",
+      "file": "os4a.pdf",
       "start": 263,
+      "end": 289
+    },
+    {
+      "file": "os4b.pdf",
+      "start": 290,
       "end": 316
     },
     {
-      "file": "os5.pdf",
+      "file": "os5a.pdf",
       "start": 317,
+      "end": 344
+    },
+    {
+      "file": "os5b.pdf",
+      "start": 345,
       "end": 372
     }
   ],
