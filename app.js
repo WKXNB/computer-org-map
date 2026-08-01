@@ -149,7 +149,7 @@
         localStorage.setItem(STORAGE_KEY, nextJson);
         lastSavedJson = nextJson === localJson && nextJson !== remoteJson ? "" : nextJson;
         refreshProgressUI();
-        renderDetail();
+        scheduleDetailRender();
         scheduleServerSave();
       }
     } catch (error) {
@@ -163,6 +163,9 @@
     syncPollTimer = setInterval(syncFromServer, pollMs);
   }
 
+  function scheduleDetailRender() {
+    setTimeout(renderDetail, 0);
+  }
   function currentPointIds() {
     const ids = new Set();
     graph.chapters.forEach((chapter) => {
@@ -835,7 +838,7 @@
         saveReviewMap();
         input.closest(".point-item").classList.toggle("done", input.checked);
         refreshProgressUI();
-        renderDetail();
+        scheduleDetailRender();
       });
     });
 
@@ -848,7 +851,7 @@
         });
         saveReviewMap();
         refreshProgressUI();
-        renderDetail();
+        scheduleDetailRender();
       });
     });
 
@@ -1318,7 +1321,7 @@
           renderPointModal(found);
         }
         refreshProgressUI();
-        renderDetail();
+        scheduleDetailRender();
       }
     });
 
