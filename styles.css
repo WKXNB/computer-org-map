@@ -594,7 +594,7 @@ button {
   position: relative;
   min-width: 0;
   overflow: hidden;
-  background: var(--bg);
+  background: #fff;
   border-left: 1px solid var(--border);
 }
 
@@ -852,14 +852,10 @@ a.action-button {
   line-height: 1.6;
 }
 
-.point-item.done {
-  background: rgba(15, 159, 110, 0.06);
-  border-radius: 8px;
-}
-
 .point-item.done .point-toggle > span:last-child {
-  color: #0b7a54;
-  text-decoration: none;
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(104, 112, 132, 0.45);
 }
 
 .point-detail-button {
