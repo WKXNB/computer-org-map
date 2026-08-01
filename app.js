@@ -735,6 +735,7 @@
   }
 
   function renderDetail() {
+    const previousScrollTop = els.detailContent.scrollTop || 0;
     const context = selectedContext();
     if (!context) {
       els.detailEmpty.hidden = false;
@@ -834,6 +835,11 @@
     els.detailContent.innerHTML = html;
     bindDetailEvents();
     renderIcons();
+    if (previousScrollTop > 0) {
+      requestAnimationFrame(() => {
+        els.detailContent.scrollTop = Math.min(previousScrollTop, els.detailContent.scrollHeight);
+      });
+    }
   }
 
   function bindDetailEvents() {
