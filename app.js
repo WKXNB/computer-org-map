@@ -149,7 +149,7 @@
         localStorage.setItem(STORAGE_KEY, nextJson);
         lastSavedJson = nextJson === localJson && nextJson !== remoteJson ? "" : nextJson;
         refreshProgressUI();
-        scheduleDetailRender();
+        refreshDetailMarks();
         scheduleServerSave();
       }
     } catch (error) {
@@ -163,14 +163,29 @@
     syncPollTimer = setInterval(syncFromServer, pollMs);
   }
 
+  function updateDetailStats() {
+    const stats = statsFor(currentScopePoints());
+    const boxes = els.detailContent.querySelectorAll(".stat-box strong");
+    if (boxes.length >= 3) {
+      boxes[0].textContent = stats.total;
+      boxes[1].textContent = stats.done;
+      boxes[2].textContent = percentFor(stats) + "%";
+    }
+  }
+
+  function refreshDetailMarks() {
+    els.detailContent.querySelectorAll("input[data-point-id]").forEach((input) => {
+      const checked = Boolean(reviewMap[input.dataset.pointId]);
+      input.checked = checked;
+      input.closest(".point-item").classList.toggle("done", checked);
+    });
+    updateDetailStats();
+  }
+
   function scheduleProgressRefresh() {
     setTimeout(() => {
       refreshProgressUI();
-      setTimeout(renderDetail, 60);
     }, 120);
-  }
-  function scheduleDetailRender() {
-    setTimeout(renderDetail, 60);
   }
   function currentPointIds() {
     const ids = new Set();
@@ -848,7 +863,7 @@
         const id = input.dataset.pointId;
         reviewMap[id] = input.checked;
         saveReviewMap();
-        input.closest(".point-item").classList.toggle("done", input.checked);
+        refreshDetailMarks();
         scheduleProgressRefresh();
       });
     });
@@ -861,6 +876,7 @@
           reviewMap[point.id] = action === "mark-all";
         });
         saveReviewMap();
+        refreshDetailMarks();
         scheduleProgressRefresh();
       });
     });
@@ -1330,6 +1346,7 @@
         if (found) {
           renderPointModal(found);
         }
+        refreshDetailMarks();
         scheduleProgressRefresh();
       }
     });
