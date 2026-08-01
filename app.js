@@ -148,8 +148,7 @@
         reviewMap = merged.map;
         localStorage.setItem(STORAGE_KEY, nextJson);
         lastSavedJson = nextJson === localJson && nextJson !== remoteJson ? "" : nextJson;
-        refreshProgressUI();
-        refreshDetailMarks();
+        refreshMarkState();
         scheduleServerSave();
       }
     } catch (error) {
@@ -182,10 +181,41 @@
     updateDetailStats();
   }
 
+  function refreshMarkState() {
+    updateHeaderProgress();
+    renderSidebar();
+    renderMobileStrip();
+    nodeMeta.forEach((meta) => {
+      if (meta.type === "chapter") {
+        const stats = chapterStats(meta.chapter);
+        const status = statusForStats(stats);
+        const statusEl = meta.element.querySelector(".node-status");
+        const subSpans = meta.element.querySelectorAll(".node-sub span");
+        if (statusEl) {
+          statusEl.className = "node-status " + status;
+        }
+        if (subSpans.length >= 2) {
+          subSpans[0].textContent = `${stats.done}/${stats.total} 已复习`;
+          subSpans[1].textContent = percentFor(stats) + "%";
+        }
+      } else if (meta.type === "section") {
+        const stats = sectionStats(meta.section);
+        const status = statusForStats(stats);
+        const statusEl = meta.element.querySelector(".node-status");
+        const subSpans = meta.element.querySelectorAll(".node-sub span");
+        if (statusEl) {
+          statusEl.className = "node-status " + status;
+        }
+        if (subSpans.length >= 2) {
+          subSpans[1].textContent = percentFor(stats) + "%";
+        }
+      }
+    });
+    refreshDetailMarks();
+  }
+
   function scheduleProgressRefresh() {
-    setTimeout(() => {
-      refreshProgressUI();
-    }, 120);
+    setTimeout(refreshMarkState, 120);
   }
   function currentPointIds() {
     const ids = new Set();
