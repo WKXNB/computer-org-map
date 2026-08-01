@@ -209,7 +209,8 @@ button {
 .app-shell {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr) 360px;
-  height: calc(100vh - 73px);
+  height: calc(100vh - 126px);
+  height: calc(100dvh - 126px);
   min-height: 560px;
   overflow: hidden;
 }
