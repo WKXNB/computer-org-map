@@ -310,6 +310,7 @@
   }
 
   const PDF_PARTS = (graph && graph.pdfParts) || [];
+  const PDF_CACHE_VERSION = "20260801-11";
 
   function pdfUrl(page) {
     if (!page) {
@@ -319,7 +320,7 @@
     if (!part) {
       return "#";
     }
-    return `./pdf/${part.file}#page=${page - part.start + 1}`;
+    return `./pdf/${part.file}?v=${PDF_CACHE_VERSION}#page=${page - part.start + 1}`;
   }
 
   function esc(value) {
