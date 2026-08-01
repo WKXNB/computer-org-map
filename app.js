@@ -835,6 +835,7 @@
         saveReviewMap();
         input.closest(".point-item").classList.toggle("done", input.checked);
         refreshProgressUI();
+        renderDetail();
       });
     });
 
@@ -846,8 +847,8 @@
           reviewMap[point.id] = action === "mark-all";
         });
         saveReviewMap();
-        renderDetail();
         refreshProgressUI();
+        renderDetail();
       });
     });
 
@@ -1317,6 +1318,7 @@
           renderPointModal(found);
         }
         refreshProgressUI();
+        renderDetail();
       }
     });
 
