@@ -166,11 +166,11 @@
   function scheduleProgressRefresh() {
     setTimeout(() => {
       refreshProgressUI();
-      scheduleDetailRender();
-    }, 0);
+      setTimeout(renderDetail, 60);
+    }, 120);
   }
   function scheduleDetailRender() {
-    setTimeout(renderDetail, 0);
+    setTimeout(renderDetail, 60);
   }
   function currentPointIds() {
     const ids = new Set();
