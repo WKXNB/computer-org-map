@@ -163,6 +163,12 @@
     syncPollTimer = setInterval(syncFromServer, pollMs);
   }
 
+  function scheduleProgressRefresh() {
+    setTimeout(() => {
+      refreshProgressUI();
+      scheduleDetailRender();
+    }, 0);
+  }
   function scheduleDetailRender() {
     setTimeout(renderDetail, 0);
   }
@@ -837,8 +843,7 @@
         reviewMap[id] = input.checked;
         saveReviewMap();
         input.closest(".point-item").classList.toggle("done", input.checked);
-        refreshProgressUI();
-        scheduleDetailRender();
+        scheduleProgressRefresh();
       });
     });
 
@@ -850,8 +855,7 @@
           reviewMap[point.id] = action === "mark-all";
         });
         saveReviewMap();
-        refreshProgressUI();
-        scheduleDetailRender();
+        scheduleProgressRefresh();
       });
     });
 
@@ -1320,8 +1324,7 @@
         if (found) {
           renderPointModal(found);
         }
-        refreshProgressUI();
-        scheduleDetailRender();
+        scheduleProgressRefresh();
       }
     });
 
